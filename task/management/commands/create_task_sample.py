@@ -2,7 +2,7 @@ from django.core.management import BaseCommand
 from task.models import Task, AssignedUser, Project, User
 from utils.random_due_date import generate_random_datetime
 from django.utils import lorem_ipsum
-from random import choice, randint, sample
+from random import choice
 from django.db import connection
 
 
@@ -10,13 +10,14 @@ class Command(BaseCommand):
     help = "Creates task sample data"
 
     def handle(self, *args, **options):
-        
         Task.objects.all().delete()
         AssignedUser.objects.all().delete()
 
         with connection.cursor() as cursor:
             cursor.execute("DELETE FROM sqlite_sequence WHERE name='task_task';")
-            cursor.execute("DELETE FROM sqlite_sequence WHERE name='task_assigneduser';")
+            cursor.execute(
+                "DELETE FROM sqlite_sequence WHERE name='task_assigneduser';"
+            )
 
         high = Task.PriorityChoices.HIGH
         medium = Task.PriorityChoices.MEDIUM
@@ -68,7 +69,7 @@ class Command(BaseCommand):
                 due_date=generate_random_datetime(),
             ),
         ]
-        
+
         Task.objects.bulk_create(task)
 
         tasks = Task.objects.all()
@@ -81,7 +82,6 @@ class Command(BaseCommand):
                 task = choice(tasks)
                 if (user.id, task.id) not in assigned_pairs:
                     break
-            
-            AssignedUser.objects.create(user=user,task=task)
-            assigned_pairs.add((user.id, task.id))
 
+            AssignedUser.objects.create(user=user, task=task)
+            assigned_pairs.add((user.id, task.id))

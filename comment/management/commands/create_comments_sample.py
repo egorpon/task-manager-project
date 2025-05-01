@@ -3,7 +3,7 @@ from comment.models import Comment
 from task.models import Task
 from django.contrib.auth.models import User
 from django.utils import lorem_ipsum
-from random import choice, randint, sample
+from random import choice
 from django.db import connection
 
 
@@ -11,7 +11,6 @@ class Command(BaseCommand):
     help = "Creates сomments sample data"
 
     def handle(self, *args, **options):
-        
         Comment.objects.all().delete()
 
         with connection.cursor() as cursor:
@@ -22,5 +21,6 @@ class Command(BaseCommand):
         for i in range(10):
             user = choice(users)
             task = choice(tasks)
-            Comment.objects.create(text=lorem_ipsum.paragraph(), posted_by=user, task=task)
-
+            Comment.objects.create(
+                text=lorem_ipsum.paragraph(), posted_by=user, task=task
+            )
