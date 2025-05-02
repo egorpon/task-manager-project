@@ -1,7 +1,9 @@
 from django.db import models
 from project.models import Project
 from django.contrib.auth.models import User
-
+from datetime import datetime
+from django.utils import timezone
+from zoneinfo import ZoneInfo
 
 # Create your models here.
 class Task(models.Model):
@@ -22,7 +24,7 @@ class Task(models.Model):
         max_length=11, choices=StatusChoices.choices, default=StatusChoices.PENDING
     )
     project = models.ForeignKey(Project, related_name="tasks", on_delete=models.CASCADE)
-    due_date = models.DateTimeField(null=True)
+    due_date = models.DateTimeField(null=False,default=(datetime.now(tz=ZoneInfo("EET"))+timezone.timedelta(days=365*5)))
     
     user = models.ManyToManyField(User, through="AssignedUser", related_name="assigned_tasks")
 
@@ -31,8 +33,8 @@ class Task(models.Model):
 
 class AssignedUser(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='users')
     assigned_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.user.username} assigned to task {self.task.name}'
+        return  self.user.username
