@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from task.serializers import TaskSerializer
 
 
-class ProjectSerializer(serializers.ModelSerializer):
+class ProjectListCreateSerializer(serializers.ModelSerializer):
     total_tasks = serializers.SerializerMethodField()
     
     def get_total_tasks(self, obj):
@@ -19,21 +19,30 @@ class ProjectSerializer(serializers.ModelSerializer):
         extra_kwargs = {"id": {"read_only": True}}
 
     def validate_due_date(self, value):
-        old_due_date = self.instance.due_date
         if value is None:
-            return old_due_date
-        if value < datetime.now(tz=ZoneInfo("EET")):
+            return value
+        elif value < datetime.now(tz=ZoneInfo("EET")):
             raise serializers.ValidationError(
                 "Date cannot be earlier than current time"
             )
         return value
 
 
+class ProjectTaskDetail(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ("id",
+            "name",
+            "description",
+            "priority",
+            "status",
+            "due_date",)
+
 class ProjectDetailSerializer(serializers.ModelSerializer):
+    tasks = ProjectTaskDetail(many=True, read_only=True)
     class Meta:
         model = Project
         fields = ("name", "description", "due_date", "tasks")
 
-    tasks = TaskSerializer(many=True, read_only=True)
 
     

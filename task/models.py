@@ -24,7 +24,7 @@ class Task(models.Model):
         max_length=11, choices=StatusChoices.choices, default=StatusChoices.PENDING
     )
     project = models.ForeignKey(Project, related_name="tasks", on_delete=models.CASCADE)
-    due_date = models.DateTimeField(null=False,default=(datetime.now(tz=ZoneInfo("EET"))+timezone.timedelta(days=365*5)))
+    due_date = models.DateTimeField(null=True)
     
     user = models.ManyToManyField(User, through="AssignedUser", related_name="assigned_tasks")
 
@@ -32,7 +32,7 @@ class Task(models.Model):
         return self.name
 
 class AssignedUser(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user')
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='users')
     assigned_at = models.DateTimeField(auto_now_add=True)
 
