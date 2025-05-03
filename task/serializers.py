@@ -96,17 +96,20 @@ class TaskDetailSerializer(serializers.ModelSerializer):
         )
 
     def update(self, instance, validated_data):
-        user_data = validated_data.pop("users")
-
+        new_users = validated_data.pop("users")
         instance = super().update(instance, validated_data)
 
-        if user_data is not None:
-            instance.user.clear()
+        old_users = instance.user.all()
+        old_users_set = set(old_users) 
+        new_users_set = set(new_users) 
 
-            for user in user_data:
-                instance.user.add(user)
+        for user in old_users_set - new_users_set:
+            AssignedUser.objects.filter(task=instance, user=user).delete()
+        
+        for user in new_users_set - old_users_set:
+            AssignedUser.objects.create(task=instance, user=user)
 
-            return instance
+        return instance
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
