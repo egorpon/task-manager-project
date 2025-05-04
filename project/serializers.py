@@ -3,7 +3,7 @@ from project.models import Project
 from task.models import Task
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from task.serializers import TaskSerializer
+from task.serializers import TaskReadSerializer
 
 
 class ProjectListCreateSerializer(serializers.ModelSerializer):
@@ -29,6 +29,11 @@ class ProjectListCreateSerializer(serializers.ModelSerializer):
 
 
 class ProjectTaskDetail(serializers.ModelSerializer):
+    total_assigned_user = serializers.SerializerMethodField()
+
+    def get_total_assigned_user(self, obj):
+        return obj.users.count()
+
     class Meta:
         model = Task
         fields = ("id",
@@ -36,7 +41,8 @@ class ProjectTaskDetail(serializers.ModelSerializer):
             "description",
             "priority",
             "status",
-            "due_date",)
+            "due_date",
+            "total_assigned_user")
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
     tasks = ProjectTaskDetail(many=True, read_only=True)
