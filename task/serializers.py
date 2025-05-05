@@ -21,7 +21,11 @@ class TaskProjectDetail(serializers.ModelSerializer):
 
 
 class TaskDetailSerializer(serializers.ModelSerializer):
-    users = UsersSerializer(many=True,read_only=True)
+    assigned_users = UsersSerializer(many=True,read_only=True)
+    total_comments = serializers.SerializerMethodField()
+
+    def get_total_comments(self, obj):
+        return obj.comments.count()
 
     class Meta:
         model = Task
@@ -32,7 +36,8 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             "priority",
             "status",
             "due_date",
-            "users",
+            "assigned_users",
+            "total_comments"
         )
 
 
@@ -41,7 +46,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
 
     project_detail = TaskProjectDetail(read_only=True, source="project")
 
-    users = UsersSerializer(many=True,read_only=True)
+    assigned_users = UsersSerializer(many=True,read_only=True)
 
     class Meta:
         model = Task
@@ -53,7 +58,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
             "status",
             "due_date",
             "project_detail",
-            "users",
+            "assigned_users",
         )
 
 
@@ -61,7 +66,7 @@ class TaskWriteSerializer(serializers.ModelSerializer):
     project_id = serializers.PrimaryKeyRelatedField(
         queryset=Project.objects.all(), source="project"
     )
-    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+    users = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True, source='user')
     class Meta:
         model = Task
         fields = (

@@ -32,7 +32,7 @@ class ProjectTaskDetail(serializers.ModelSerializer):
     total_assigned_user = serializers.SerializerMethodField()
 
     def get_total_assigned_user(self, obj):
-        return obj.users.count()
+        return obj.assigned_users.count()
 
     class Meta:
         model = Task

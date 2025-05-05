@@ -1,0 +1,16 @@
+PUT http://127.0.0.1:8000/comments/17 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NDcxODk5LCJpYXQiOjE3NDY0NjgyOTksImp0aSI6Ijg1ZDliZTk3OTIzYjRlMDdhYzU4NDNmYWYzNmNiMWU5IiwidXNlcl9pZCI6NH0._LttG9BEvjYJpK5Obb5BGhbNRiYdH09vrhRvHoM252w
+
+{   
+    "text":"admin krasavchik"
+}
+
+###
+POST http://127.0.0.1:8000/api/token/ HTTP/1.1
+Content-Type: application/json
+
+{
+    "username": "germanfricz",
+    "password": "test"
+}
