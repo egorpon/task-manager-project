@@ -10,16 +10,22 @@ class PostedBySerializer(serializers.ModelSerializer):
             "username"
         )
 
+class TaskSerializerForComment(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ("id","name")
+
 class CommentsReadSerializer(serializers.ModelSerializer):
     posted_by = PostedBySerializer(read_only=True)
     comments_id = serializers.IntegerField(read_only=True, source='id')
+    task = TaskSerializerForComment(read_only=True)
     class Meta:
         model = Comment
         fields = (
-            "task_id",
+            "task",
+            "posted_by",
             "comments_id",
             "created_at",
-            "posted_by",
             "text",
         )
 

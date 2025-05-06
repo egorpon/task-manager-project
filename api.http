@@ -1,8 +1,9 @@
-PUT http://127.0.0.1:8000/comments/17 HTTP/1.1
+DELETE http://127.0.0.1:8000/comments/6/delete HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NDcxODk5LCJpYXQiOjE3NDY0NjgyOTksImp0aSI6Ijg1ZDliZTk3OTIzYjRlMDdhYzU4NDNmYWYzNmNiMWU5IiwidXNlcl9pZCI6NH0._LttG9BEvjYJpK5Obb5BGhbNRiYdH09vrhRvHoM252w
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NTcwMTc5LCJpYXQiOjE3NDY1NjY1NzksImp0aSI6IjI5OTVmNzk3MjFhYjQ1ZTg5Nzc4ZWRkNGQ2MjZiN2U1IiwidXNlcl9pZCI6M30.rAd5i1-YHZfimz5VB-MN4dT74zOFPFwz2QX8BTiT_m8
 
 {   
+    "task_id":2,
     "text":"admin krasavchik"
 }
 
@@ -11,6 +12,6 @@ POST http://127.0.0.1:8000/api/token/ HTTP/1.1
 Content-Type: application/json
 
 {
-    "username": "germanfricz",
-    "password": "test"
+    "username": "clarawild",
+    "password": "Ff123123"
 }
