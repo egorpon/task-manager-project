@@ -1,17 +1,17 @@
 from rest_framework import generics
-from task.models import Task
-from task.serializers import (
+from api.task.models import Task
+from api.task.serializers import (
     TaskReadSerializer,
     TaskDetailSerializer,
     TaskWriteSerializer,
     TaskUpdateSerializer,
 )
-from comment.serializers import CommentsReadSerializer
-from comment.models import Comment
+from api.comment.serializers import CommentsReadSerializer
+from api.comment.models import Comment
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from api.filters import ProjectFilter
+from api.task.filters import TaskCommentsFilter, TaskFilter
 from api.permissions import IsAdminOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
@@ -20,9 +20,16 @@ from rest_framework import status
 
 
 class TaskCommentsListAPIView(generics.ListAPIView):
-    queryset = Comment.objects.all().order_by("pk")
+    queryset = Comment.objects.all()
     serializer_class = CommentsReadSerializer
     permission_classes = [IsAuthenticated]
+    filterset_class = TaskCommentsFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+    ]
+    ordering_fields = ["posted_by__username", "created_at"]
+    ordering = ["-created_at"]
 
     def get_queryset(self):
         task_id = self.kwargs.get("task_id")
@@ -34,6 +41,14 @@ class TaskListAPIView(generics.ListAPIView):
     queryset = Task.objects.all().order_by("pk")
     serializer_class = TaskReadSerializer
     permission_classes = [IsAdminOrReadOnly]
+    filterset_class = TaskFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter
+    ]
+    search_fields = ["name"]
+    ordering_fields = ["name", "due_date"]
 
     def get_queryset(self):
         qs = super().get_queryset()

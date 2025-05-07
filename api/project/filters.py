@@ -1,5 +1,5 @@
 import django_filters
-from project.models import Project
+from api.project.models import Project
 from rest_framework import filters
 from django.db.models import Count
 

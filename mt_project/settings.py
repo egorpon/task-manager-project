@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     ###
     "api",
-    "task",
-    "project",
-    "comment",
+    "api.task",
+    "api.project",
+    "api.comment",
     "rest_framework",
     "django_extensions",
     "django_filters",

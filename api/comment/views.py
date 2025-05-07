@@ -1,7 +1,7 @@
 from rest_framework import generics
-from comment.models import Comment
-from task.models import Task
-from comment.serializers import (
+from api.comment.models import Comment
+from api.task.models import Task
+from api.comment.serializers import (
     CommentsUpdateSerializer,
     CommentsReadSerializer,
     CommentsWriteSerializer,
@@ -9,7 +9,7 @@ from comment.serializers import (
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from api.filters import ProjectFilter
+from api.comment.filters import CommentsFilter
 from api.permissions import IsAdminOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
@@ -19,6 +19,13 @@ class CommentsListAPIView(generics.ListAPIView):
     queryset = Comment.objects.all().order_by("pk")
     permission_classes = [IsAuthenticated]
     serializer_class = CommentsReadSerializer
+    filterset_class = CommentsFilter
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.OrderingFilter,
+    ]
+    ordering_fields = ["posted_by__username", "created_at"]
+
 
     def get_queryset(self):
         qs = super().get_queryset()

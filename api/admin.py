@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from comment.models import Comment
-from project.models import Project
-from task.models import Task
+from api.comment.models import Comment
+from api.project.models import Project
+from api.task.models import Task
 
 
 # Register your models here.
