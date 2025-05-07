@@ -164,7 +164,8 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
 
             for user in new_users_set - old_users_set:
                 AssignedUser.objects.create(task=instance, user=user)
-
+            
+            instance.refresh_from_db()
         return instance
 
     def validate(self, attrs):
@@ -177,14 +178,6 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
                 "Date cannot be later than project's due date"
             )
         return attrs
-
-    def validate_users(self, value):
-        for user in value:
-            if not User.objects.filter(id=user.id).exists():
-                raise serializers.ValidationError(
-                    f"User with id {user.id} doesn't exist"
-                )
-        return value
 
     def validate_due_date(self, value):
         if value is None:

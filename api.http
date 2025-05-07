@@ -1,11 +1,19 @@
-DELETE http://127.0.0.1:8000/comments/6/delete HTTP/1.1
+DELETE http://127.0.0.1:8000/tasks/12/delete HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NTcwMTc5LCJpYXQiOjE3NDY1NjY1NzksImp0aSI6IjI5OTVmNzk3MjFhYjQ1ZTg5Nzc4ZWRkNGQ2MjZiN2U1IiwidXNlcl9pZCI6M30.rAd5i1-YHZfimz5VB-MN4dT74zOFPFwz2QX8BTiT_m8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NjQyNjg3LCJpYXQiOjE3NDY2MzkwODcsImp0aSI6ImNlY2Y0YWM0MzcxNzQ3YWY4MTA1MWMxOTdhOGZiNDgxIiwidXNlcl9pZCI6M30.mtV943A_FttsM2zf4o0ha7WHeNfwM1s11OYRrZ5S3QE
 
-{   
-    "task_id":2,
-    "text":"admin krasavchik"
-}
+# {   
+#     "task_id":2,
+#     "text":"admin krasavchik"
+# }
+
+# {
+#             "name":"test",
+#             "description":"test description",
+#             "priority":"High",
+#             "project_id":"3",
+#             "users": [2]
+# }
 
 ###
 POST http://127.0.0.1:8000/api/token/ HTTP/1.1
