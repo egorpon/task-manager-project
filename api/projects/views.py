@@ -1,14 +1,14 @@
 from django.utils import regex_helper
 from rest_framework import generics
-from api.project.models import Project
-from api.project.serializers import (
+from project.models import Project
+from api.projects.serializers import (
     ProjectReadSerializer,
     ProjectWriteSerializer,
     ProjectDetailSerializer,
 )
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
-from api.project.filters import ProjectFilter
+from api.projects.filters import ProjectFilter
 from api.permissions import IsAdminOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status

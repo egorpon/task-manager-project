@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Comment, Task
+from comment.models import Comment 
+from task.models import Task
 from django.contrib.auth.models import User
 
 class PostedBySerializer(serializers.ModelSerializer):

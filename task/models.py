@@ -1,5 +1,5 @@
 from django.db import models
-from api.project.models import Project
+from project.models import Project
 from django.contrib.auth.models import User
 from datetime import datetime
 from django.utils import timezone

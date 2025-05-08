@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from api.comments import views
 
 urlpatterns = [
     path("", views.CommentsListAPIView.as_view(), name="comments-list"),

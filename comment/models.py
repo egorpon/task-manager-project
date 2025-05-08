@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from api.task.models import Task
+from task.models import Task
 
 # Create your models here.
 class Comment(models.Model):

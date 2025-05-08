@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from api.projects import views
 
 urlpatterns = [
     path("", views.ProjectListAPIView.as_view(), name="project-list"),

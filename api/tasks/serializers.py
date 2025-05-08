@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from api.project.models import Project
+from project.models import Project
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from api.task.models import Task, AssignedUser
+from task.models import Task, AssignedUser
 from django.contrib.auth.models import User
 
 

@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from api.project.models import Project
-from api.task.models import Task
+from project.models import Project
+from task.models import Task
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from api.task.serializers import TaskReadSerializer
+from api.tasks.serializers import TaskReadSerializer
 
 
 class ProjectReadSerializer(serializers.ModelSerializer):

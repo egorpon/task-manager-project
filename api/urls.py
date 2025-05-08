@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
 
-   path("projects/", include('api.project.urls')),
-   path('tasks/', include('api.task.urls')),
-   path('comments/', include('api.comment.urls')),
+   path("projects/", include('api.projects.urls')),
+   path('tasks/', include('api.tasks.urls')),
+   path('comments/', include('api.comments.urls')),
 ]

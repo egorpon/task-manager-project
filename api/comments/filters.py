@@ -1,6 +1,6 @@
 import django_filters
-from api.comment.models import Comment
-from api.task.models import Task
+from comment.models import Comment
+from task.models import Task
 
 
 class CommentsFilter(django_filters.FilterSet):
