@@ -6,6 +6,7 @@ from api.projects.serializers import (
     ProjectWriteSerializer,
     ProjectDetailSerializer,
 )
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from api.projects.filters import ProjectFilter
@@ -16,9 +17,11 @@ from rest_framework import status
 
 
 class ProjectListAPIView(generics.ListAPIView):
-    queryset = Project.objects.all().order_by("pk")
+    queryset = (
+        Project.objects.all().prefetch_related("tasks").order_by("pk")
+    )
     serializer_class = ProjectReadSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAuthenticated]
     filterset_class = ProjectFilter
     filter_backends = [
         DjangoFilterBackend,
@@ -38,26 +41,26 @@ class ProjectListAPIView(generics.ListAPIView):
 class ProjectCreateAPIView(generics.CreateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectWriteSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminUser]
 
 
 class ProjectDetailAPIView(generics.RetrieveAPIView):
-    queryset = Project.objects.prefetch_related("tasks").all()
+    queryset = Project.objects.prefetch_related("tasks","tasks__assigned_users").all()
     serializer_class = ProjectDetailSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAuthenticated]
     lookup_url_kwarg = "project_id"
 
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(tasks__assigned_users__user=self.request.user)
+        return qs.filter(tasks__assigned_users__user=self.request.user).distinct()
 
 
 class ProjectUpdateAPIView(generics.UpdateAPIView):
     queryset = Project.objects.prefetch_related("tasks").all()
     serializer_class = ProjectWriteSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminUser]
 
     lookup_url_kwarg = "project_id"
 
@@ -71,8 +74,8 @@ class ProjectUpdateAPIView(generics.UpdateAPIView):
 class ProjectDeleteAPIView(generics.DestroyAPIView):
     queryset = Project.objects.prefetch_related("tasks").all()
     serializer_class = ProjectDetailSerializer
-    permission_classes = [IsAdminOrReadOnly]
-    lookup_url_kwarg = "project_id"
+    permission_classes = [IsAdminUser]
+    lookup_url_kwarg = "project_id"     
 
     def get_queryset(self):
         qs = super().get_queryset()

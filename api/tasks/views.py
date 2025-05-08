@@ -12,15 +12,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from api.tasks.filters import TaskCommentsFilter, TaskFilter
-from api.permissions import IsAdminOrReadOnly
 from rest_framework.response import Response
 from rest_framework import status
 
 
-
-
 class TaskCommentsListAPIView(generics.ListAPIView):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.select_related("posted_by", "task").all()
     serializer_class = CommentsReadSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = TaskCommentsFilter
@@ -38,14 +35,19 @@ class TaskCommentsListAPIView(generics.ListAPIView):
 
 
 class TaskListAPIView(generics.ListAPIView):
-    queryset = Task.objects.all().order_by("pk")
+    queryset = (
+        Task.objects.prefetch_related("assigned_users", "assigned_users__user")
+        .select_related("project")
+        .all()
+        .order_by("pk")
+    )
     serializer_class = TaskReadSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = TaskFilter
     filter_backends = [
         DjangoFilterBackend,
         filters.SearchFilter,
-        filters.OrderingFilter
+        filters.OrderingFilter,
     ]
     search_fields = ["name"]
     ordering_fields = ["name", "due_date"]
@@ -78,7 +80,9 @@ class TaskCreateAPIView(generics.CreateAPIView):
 
 
 class TaskDetailAPIView(generics.RetrieveAPIView):
-    queryset = Task.objects.all().prefetch_related("assigned_users").order_by("pk")
+    queryset = (
+        Task.objects.prefetch_related("assigned_users__user").all().order_by("pk")
+    )
     permission_classes = [IsAuthenticated]
     serializer_class = TaskDetailSerializer
     lookup_url_kwarg = "task_id"
@@ -91,7 +95,7 @@ class TaskDetailAPIView(generics.RetrieveAPIView):
 
 
 class TaskUpdateAPIView(generics.UpdateAPIView):
-    queryset = Task.objects.all().prefetch_related("assigned_users").order_by("pk")
+    queryset = Task.objects.all().order_by("pk")
     permission_classes = [IsAdminUser]
     serializer_class = TaskUpdateSerializer
     lookup_url_kwarg = "task_id"
@@ -104,7 +108,9 @@ class TaskUpdateAPIView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance=instance, data=request.data, partial=False)
+        serializer = self.get_serializer(
+            instance=instance, data=request.data, partial=False
+        )
         serializer.is_valid(raise_exception=True)
         task = serializer.save()
         read_serializer = TaskDetailSerializer(task)
@@ -115,7 +121,9 @@ class TaskUpdateAPIView(generics.UpdateAPIView):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+        serializer = self.get_serializer(
+            instance=instance, data=request.data, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         task = serializer.save()
         task.refresh_from_db()
@@ -127,7 +135,7 @@ class TaskUpdateAPIView(generics.UpdateAPIView):
 
 
 class TaskDeleteAPIView(generics.DestroyAPIView):
-    queryset = Task.objects.all().prefetch_related("assigned_users").order_by("pk")
+    queryset = Task.objects.all().order_by("pk")
     permission_classes = [IsAdminUser]
     serializer_class = TaskDetailSerializer
     lookup_url_kwarg = "task_id"

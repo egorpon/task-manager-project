@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from project.models import Project
 from task.models import Task
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from django.utils import timezone
 from api.tasks.serializers import TaskReadSerializer
 
 
@@ -27,7 +26,7 @@ class ProjectWriteSerializer(serializers.ModelSerializer):
     def validate_due_date(self, value):
         if value is None:
             return value
-        elif value < datetime.now(tz=ZoneInfo("EET")):
+        elif value < timezone.now():
             raise serializers.ValidationError(
                 "Date cannot be earlier than current time"
             )

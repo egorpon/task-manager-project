@@ -1,10 +1,11 @@
 from rest_framework.test import APITestCase
 from django.contrib.auth.models import User
-from api.task.models import Task, AssignedUser
-from api.project.models import Project
+from task.models import Task, AssignedUser
+from project.models import Project
 from django.urls import reverse
 from utils.random_due_date import generate_random_datetime
 from rest_framework import status
+from django.utils import timezone
 
 
 # Create your tests here.
@@ -24,7 +25,7 @@ class TaskAPITestCase(APITestCase):
             description="Test Description",
             priority=Task.PriorityChoices.LOW,
             project=self.project,
-            due_date=generate_random_datetime(),
+            due_date=self.project.due_date - timezone.timedelta(days=2),
         )
 
         AssignedUser.objects.create(user=self.normal_user, task=self.task)
@@ -32,8 +33,22 @@ class TaskAPITestCase(APITestCase):
         self.list_url = reverse("task-list")
         self.create_url = reverse("task-create")
         self.detail_url = reverse("task-detail", kwargs={"task_id": self.task.id})
+        self.comments_url = reverse("task-comments", kwargs={"task_id": self.task.id})
         self.update_url = reverse("task-update", kwargs={"task_id": self.task.id})
         self.delete_url = reverse("task-delete", kwargs={"task_id": self.task.id})
+
+    def test_only_authenticated_user_can_view_task_comments_list(self):
+        self.client.login(username="admin", password="test")
+        response = self.client.get(self.comments_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.client.login(username="mr_fox", password="test")
+        response = self.client.get(self.comments_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.client.logout()
+        response = self.client.get(self.comments_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_only_authenticated_user_can_view_task_list(self):
         self.client.login(username="admin", password="test")
@@ -69,35 +84,39 @@ class TaskAPITestCase(APITestCase):
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_due_date_in_past_raises_error(self):
-        data = {
-            "name": "test",
-            "description": "test description",
-            "priority": Task.PriorityChoices.HIGH,
-            "project_id": self.project.id,
-            "due_date" : "2025-05-05",
-            "users": [self.normal_user.id],
-        }
-
-        self.client.login(username="admin", password="test")
-        response = self.client.post(self.create_url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["due_date"][0], "Date cannot be earlier than current time")
-
     def test_due_date_after_project_due_date_raises_error(self):
         data = {
             "name": "test",
             "description": "test description",
             "priority": Task.PriorityChoices.HIGH,
             "project_id": self.project.id,
-            "due_date" : "2050-05-05",
+            "due_date": self.project.due_date + timezone.timedelta(days=5),
             "users": [self.normal_user.id],
         }
 
         self.client.login(username="admin", password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["non_field_errors"][0], "Date cannot be later than project's due date")
+        self.assertEqual(
+            response.data["non_field_errors"][0],
+            "Date cannot be later than project's due date",
+        )
+
+    def test_due_date_in_past_raises_error(self):
+        data = {
+            "name": "test",
+            "description": "test description",
+            "priority": Task.PriorityChoices.HIGH,
+            "project_id": self.project.id,
+            "due_date": timezone.now() - timezone.timedelta(days=5),
+            "users": [self.normal_user.id],
+        }
+        self.client.login(username="admin", password="test")
+        response = self.client.post(self.create_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            response.data["due_date"][0], "Date cannot be earlier than current time"
+        )
 
     def test_task_with_nonexisting_user_raises_error(self):
         data = {

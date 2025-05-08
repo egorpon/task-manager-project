@@ -15,7 +15,7 @@ urlpatterns = [
     path(
         "<int:task_id>/comments",
         views.TaskCommentsListAPIView.as_view(),
-        name="task-detail",
+        name="task-comments",
     ),
     path(
         "<int:task_id>/update",

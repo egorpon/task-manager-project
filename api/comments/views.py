@@ -16,7 +16,7 @@ from rest_framework import status
 
 
 class CommentsListAPIView(generics.ListAPIView):
-    queryset = Comment.objects.all().order_by("pk")
+    queryset = Comment.objects.all().select_related("posted_by", "task").order_by("pk")
     permission_classes = [IsAuthenticated]
     serializer_class = CommentsReadSerializer
     filterset_class = CommentsFilter
@@ -25,7 +25,6 @@ class CommentsListAPIView(generics.ListAPIView):
         filters.OrderingFilter,
     ]
     ordering_fields = ["posted_by__username", "created_at"]
-
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -121,25 +120,3 @@ class CommentsDeleteAPIView(generics.DestroyAPIView):
         if self.request.user.is_staff:
             return qs
         return qs.filter(posted_by=self.request.user)
-
-
-# class CommentsRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
-#     queryset = Comment.objects.all().order_by("pk")
-#     lookup_url_kwarg = "comment_id"
-#     permission_classes = [IsAuthenticated]
-
-#     def get_queryset(self):
-#         qs = super().get_queryset()
-#         if self.request.user.is_staff:
-#             return qs
-#         return qs.filter(posted_by=self.request.user)
-
-#     def get_serializer_class(self):
-#         if self.request.method in ["PUT", "PATCH", "DELETE"]:
-#             if self.request.user.is_staff:
-#                 return CommentsWriteSerializer
-#             comment = self.get_object()
-#             if comment.posted_by != self.request.user:
-#                 PermissionError("You don't have permission to edit this comment")
-#             return CommentsUpdateSerializer
-#         return CommentsReadSerializer

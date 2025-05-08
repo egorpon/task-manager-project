@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from project.models import Project
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from django.utils import timezone
 from task.models import Task, AssignedUser
 from django.contrib.auth.models import User
 
@@ -106,18 +105,10 @@ class TaskWriteSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-    def validate_users(self, value):
-        for user in value:
-            if not User.objects.filter(id=user.id).exists():
-                raise serializers.ValidationError(
-                    f"User with id {user.id} doesn't exist"
-                )
-        return value
-
     def validate_due_date(self, value):
         if value is None:
             return value
-        elif value < datetime.now(tz=ZoneInfo("EET")):
+        elif value < timezone.now():
             raise serializers.ValidationError(
                 "Date cannot be earlier than current time"
             )
@@ -182,7 +173,7 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
     def validate_due_date(self, value):
         if value is None:
             return value
-        elif value < datetime.now(tz=ZoneInfo("EET")):
+        elif value < timezone.now():
             raise serializers.ValidationError(
                 "Date cannot be earlier than current time"
             )
