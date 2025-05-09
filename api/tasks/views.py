@@ -1,4 +1,7 @@
+from django.shortcuts import render
 from rest_framework import generics
+from rest_framework.views import APIView
+from django.contrib.auth.models import User
 from task.models import Task
 from api.tasks.serializers import (
     TaskReadSerializer,
@@ -6,6 +9,7 @@ from api.tasks.serializers import (
     TaskWriteSerializer,
     TaskUpdateSerializer,
 )
+from rest_framework.parsers import MultiPartParser, FormParser
 from api.comments.serializers import CommentsReadSerializer
 from comment.models import Comment
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -14,7 +18,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from api.tasks.filters import TaskCommentsFilter, TaskFilter
 from rest_framework.response import Response
 from rest_framework import status
-
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from drf_spectacular.types import OpenApiTypes
 
 class TaskCommentsListAPIView(generics.ListAPIView):
     queryset = Comment.objects.select_related("posted_by", "task").all()
@@ -58,11 +63,11 @@ class TaskListAPIView(generics.ListAPIView):
             return qs
         return qs.filter(user=self.request.user)
 
-
 class TaskCreateAPIView(generics.CreateAPIView):
     queryset = Task.objects.all()
     serializer_class = TaskWriteSerializer
     permission_classes = [IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -70,6 +75,7 @@ class TaskCreateAPIView(generics.CreateAPIView):
             return qs
         return qs.filter(user=self.request.user)
 
+    
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -98,6 +104,7 @@ class TaskUpdateAPIView(generics.UpdateAPIView):
     queryset = Task.objects.all().order_by("pk")
     permission_classes = [IsAdminUser]
     serializer_class = TaskUpdateSerializer
+    parser_classes = [MultiPartParser, FormParser]
     lookup_url_kwarg = "task_id"
 
     def get_queryset(self):

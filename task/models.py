@@ -1,9 +1,6 @@
 from django.db import models
 from project.models import Project
 from django.contrib.auth.models import User
-from datetime import datetime
-from django.utils import timezone
-from zoneinfo import ZoneInfo
 
 # Create your models here.
 class Task(models.Model):
@@ -38,3 +35,8 @@ class AssignedUser(models.Model):
 
     def __str__(self):
         return  self.user.username
+    
+class AttachedFiles(models.Model):
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name="files")
+    files = models.FileField(upload_to='attachments/',blank=True, null=True)
+    uploaded_at = models.DateTimeField(blank=True, null=True)

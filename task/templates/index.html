@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+<!--  -->
+<!--  -->{% block content %}
+<!--  -->
+<form
+  action="{% url 'task-create' %}"
+  method="POST"
+  enctype="multipart/form-data"
+>
+  <!--  -->
+  {% csrf_token %}
+  <input type="file" name="file" />
+  <button type="submit">Submit</button>
+</form>
+{%endblock%}

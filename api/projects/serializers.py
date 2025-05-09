@@ -8,7 +8,7 @@ from api.tasks.serializers import TaskReadSerializer
 class ProjectReadSerializer(serializers.ModelSerializer):
     total_tasks = serializers.SerializerMethodField()
 
-    def get_total_tasks(self, obj):
+    def get_total_tasks(self, obj) -> int:
         tasks = obj.tasks.all()
         return tasks.count()
 
@@ -36,7 +36,7 @@ class ProjectWriteSerializer(serializers.ModelSerializer):
 class TaskSerializerForProject(serializers.ModelSerializer):
     total_assigned_user = serializers.SerializerMethodField()
 
-    def get_total_assigned_user(self, obj):
+    def get_total_assigned_user(self, obj) -> int:
         return obj.assigned_users.count()
 
     class Meta:

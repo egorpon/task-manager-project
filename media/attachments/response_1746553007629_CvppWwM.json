@@ -1,0 +1,15 @@
+{
+  "id": 5,
+  "name": "Add email notifications",
+  "description": "Ipsa cumque quos at doloremque animi explicabo nulla vero ipsum totam, in laboriosam vel aliquid voluptate deleniti maxime. Vitae aperiam omnis eligendi dolor error at atque quo.",
+  "priority": "Low",
+  "status": "Completed",
+  "due_date": "2025-05-28T07:21:17.985376+03:00",
+  "assigned_users": [
+    {
+      "user_id": 4,
+      "username": "germanfricz"
+    }
+  ],
+  "total_comments": 3
+}
