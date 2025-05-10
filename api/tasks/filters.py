@@ -25,6 +25,7 @@ class TaskFilter(django_filters.FilterSet):
             "priority" :["iexact", "icontains"],
             "status" :["iexact", "icontains"],
             "user__username" :["iexact", "icontains"],
+            "project__id": ["exact"],
             "project__name": ["iexact", "icontains"],
         }
 

@@ -1,6 +1,14 @@
-POST http://127.0.0.1:8000/tasks/create/ HTTP/1.1
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2NzI2OTQ1LCJpYXQiOjE3NDY3MjMzNDUsImp0aSI6ImNkZDBiNGYwY2Q0YzQ3YTNiNDQ4ZmZmNDg0NjQxOGFkIiwidXNlcl9pZCI6M30.5SRbCa0W-0WK40REqVmK_t3QlZE8bnpEqZRxHeOzoWk
+get  http://127.0.0.1:8000/tasks/ HTTP/1.1
+Content-Type: multipart/form-data
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2ODkzOTc3LCJpYXQiOjE3NDY4ODYxNTUsImp0aSI6ImRkNWEzNzViODVjNDQ0ZTg5ZGQ3ZTkzODQ3NzEyNzhjIiwidXNlcl9pZCI6M30.QyF7qlmGZwypXy2hNfEgSbayjr31RCyje9o5DzJaFqY
+
+# {
+#             "name":"test",
+#             "description":"test description",
+#             "priority":"High",
+#             "project_id":"4",
+#             "users": [3]
+# }
 
 # {   
 #     "task_id":2,
@@ -8,12 +16,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiY
 # }
 
 # {
-#             "name":"test",
-#             "description":"test description",
-#             "priority":"High",
-#             "project_id":"3",
-#             "users": [2]
+#             "name":"dddd",
+#             "description":"test daadescription",
+#             "due_date":null
 # }
+
+
 
 ###
 POST http://127.0.0.1:8000/api/token/ HTTP/1.1
@@ -23,3 +31,10 @@ Content-Type: application/json
     "username": "clarawild",
     "password": "Ff123123"
 }
+
+###
+
+POST http://127.0.0.1:8000/api/token/refresh/ HTTP/1.1
+Content-Type: application/json
+
+{"refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0Njk3MjU1NSwiaWF0IjoxNzQ2ODg2MTU1LCJqdGkiOiI4N2NkNjVmN2M5MDQ0ZTFiOTNmMjQwMDlmMzQ5Y2UwOSIsInVzZXJfaWQiOjN9.79mAfjRoqvjDfMnTl-j5I_ikDUR4Y8thuMmUUg86e2k"}

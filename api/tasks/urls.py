@@ -13,18 +13,28 @@ urlpatterns = [
         name="task-detail",
     ),
     path(
-        "<int:task_id>/comments",
+        "<int:task_id>/comments/",
         views.TaskCommentsListAPIView.as_view(),
         name="task-comments",
     ),
     path(
-        "<int:task_id>/update",
+        "<int:task_id>/update/",
         views.TaskUpdateAPIView.as_view(),
         name="task-update",
     ),
     path(
-        "<int:task_id>/delete",
+        "<int:task_id>/delete/",
         views.TaskDeleteAPIView.as_view(),
         name="task-delete",
     ),
+    path(
+        "<int:task_id>/attachments/",
+        views.TasksAttachmentsListAPIView.as_view(),
+        name = "task-file-list"
+    ),
+    path(
+        "<int:task_id>/attachments/<int:file_id>/delete/",
+        views.TasksAttachmentsDeleteAPIView.as_view(),
+        name = "task-file-delete"
+    )
 ]

@@ -10,9 +10,10 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from api.projects.filters import ProjectFilter
-from api.permissions import IsAdminOrReadOnly
+from api.permissions import IsAdminOrProjectOwner
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Q
 # Create your views here.
 
 
@@ -35,14 +36,16 @@ class ProjectListAPIView(generics.ListAPIView):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(tasks__assigned_users__user=self.request.user)
+        return qs.filter(Q(tasks__assigned_users__user=self.request.user) | Q(owner=self.request.user))
 
 
 class ProjectCreateAPIView(generics.CreateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectWriteSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 class ProjectDetailAPIView(generics.RetrieveAPIView):
     queryset = Project.objects.prefetch_related("tasks","tasks__assigned_users").all()
@@ -54,13 +57,13 @@ class ProjectDetailAPIView(generics.RetrieveAPIView):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(tasks__assigned_users__user=self.request.user).distinct()
+        return qs.filter(Q(tasks__assigned_users__user=self.request.user) | Q(owner=self.request.user)).distinct()
 
 
 class ProjectUpdateAPIView(generics.UpdateAPIView):
     queryset = Project.objects.prefetch_related("tasks").all()
     serializer_class = ProjectWriteSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
 
     lookup_url_kwarg = "project_id"
 
@@ -68,17 +71,17 @@ class ProjectUpdateAPIView(generics.UpdateAPIView):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(tasks__assigned_users__user=self.request.user)
+        return qs.filter(owner=self.request.user)
 
 
 class ProjectDeleteAPIView(generics.DestroyAPIView):
     queryset = Project.objects.prefetch_related("tasks").all()
     serializer_class = ProjectDetailSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
     lookup_url_kwarg = "project_id"     
 
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(tasks__assigned_users__user=self.request.user)
+        return qs.filter(owner=self.request.user)

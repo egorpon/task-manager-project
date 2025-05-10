@@ -20,12 +20,12 @@ class ProjectSerializerForTask(serializers.ModelSerializer):
         fields = ("id", "name", "due_date")
 
 
-class UploadAttachedFilesSerializer(serializers.ModelSerializer):
+class AttachedFilesSerializer(serializers.ModelSerializer):
     uploaded_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = AttachedFiles
-        fields = ("id","files", "uploaded_at")
+        fields = ("id", "files", "uploaded_at")
 
 
 class TaskDetailSerializer(serializers.ModelSerializer):
@@ -34,12 +34,13 @@ class TaskDetailSerializer(serializers.ModelSerializer):
     )
     assigned_users = AssignedUserSerializer(many=True, read_only=True)
     total_comments = serializers.SerializerMethodField()
+    total_uploaded_files = serializers.SerializerMethodField()
 
-    files = UploadAttachedFilesSerializer(many=True, read_only=True)
-    
+    def get_total_uploaded_files(self, obj) -> int:
+        return len(obj.files.all())
 
     def get_total_comments(self, obj) -> int:
-        return obj.comments.count()
+        return len(obj.comments.all())
 
     class Meta:
         model = Task
@@ -53,7 +54,7 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             "assigned_users",
             "project_id",
             "total_comments",
-            "files",
+            "total_uploaded_files"
         )
 
 
@@ -62,9 +63,15 @@ class TaskReadSerializer(serializers.ModelSerializer):
 
     project_detail = ProjectSerializerForTask(read_only=True, source="project")
 
-    assigned_users = AssignedUserSerializer(many=True, read_only=True)
+    total_assigned_users = serializers.SerializerMethodField()
+    total_uploaded_files = serializers.SerializerMethodField()
 
-    files = UploadAttachedFilesSerializer(many=True, read_only=True)
+
+    def get_total_assigned_users(self, obj) -> int:
+        return len(obj.assigned_users.all())
+
+    def get_total_uploaded_files(self, obj):
+        return len(obj.files.all())
 
     class Meta:
         model = Task
@@ -76,8 +83,8 @@ class TaskReadSerializer(serializers.ModelSerializer):
             "status",
             "due_date",
             "project_detail",
-            "assigned_users",
-            "files",
+            "total_assigned_users",
+            "total_uploaded_files"
         )
 
 
@@ -93,7 +100,6 @@ class TaskWriteSerializer(serializers.ModelSerializer):
         ),
         write_only=True,
         required=False,
-
     )
 
     class Meta:
@@ -112,7 +118,7 @@ class TaskWriteSerializer(serializers.ModelSerializer):
         extra_kwargs = {"id": {"read_only": True}}
 
     def create(self, validated_data):
-        users_data = validated_data.pop("users")
+        users_data = validated_data.pop("users",None)
         uploaded_files = validated_data.pop("uploaded_files", None)
         task = Task.objects.create(**validated_data)
 
@@ -126,6 +132,14 @@ class TaskWriteSerializer(serializers.ModelSerializer):
             AssignedUser.objects.create(task=task, user_id=user.id)
         return task
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context["request"].user
+        if user.is_staff:
+            self.fields["project_id"].queryset = Project.objects.all()
+        else:
+            self.fields["project_id"].queryset = Project.objects.filter(owner=user) 
+
     def validate(self, attrs):
         project = attrs.get("project")
         due_date = attrs.get("due_date")
@@ -136,6 +150,7 @@ class TaskWriteSerializer(serializers.ModelSerializer):
                 "Date cannot be later than project's due date"
             )
         return attrs
+
 
     def validate_due_date(self, value):
         if value is None:
@@ -162,9 +177,6 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False,
     )
-    deleted_files = serializers.ListField(
-        child=serializers.IntegerField(), write_only=True, required=False
-    )
 
     class Meta:
         model = Task
@@ -178,16 +190,22 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
             "project_id",
             "users",
             "uploaded_files",
-            "deleted_files",
         )
         extra_kwargs = {
             "id": {"read_only": True},
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        user = self.context["request"].user
+        if user.is_staff:
+            self.fields["project_id"].queryset = Project.objects.all()
+        else:
+            self.fields["project_id"].queryset = Project.objects.filter(owner=user) 
+
     def update(self, instance, validated_data):
         new_users = validated_data.pop("users", None)
-        uploaded_files = validated_data.pop("uploaded_files",None)
-        deleted_files = validated_data.pop("deleted_files",None)
+        uploaded_files = validated_data.pop("uploaded_files", None)
         instance.uploaded_at = timezone.now()
         instance = super().update(instance, validated_data)
 
@@ -210,10 +228,6 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
                     task=instance, files=file, uploaded_at=timezone.now()
                 )
             instance.refresh_from_db()
-
-        if deleted_files is not None:
-            for file_id in deleted_files:
-                AttachedFiles.objects.filter(task=instance, pk=file_id).delete()
 
         return instance
 

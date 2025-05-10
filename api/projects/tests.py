@@ -17,6 +17,7 @@ class TaskAPITestCase(APITestCase):
         self.normal_user = User.objects.create_user(username="mr_fox", password="test")
         self.project = Project.objects.create(
             name="Website Redesign",
+            owner=self.normal_user,
             description="Updating company's website design",
             due_date=generate_random_datetime(),
         )
@@ -55,7 +56,7 @@ class TaskAPITestCase(APITestCase):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_only_admin_can_create_project(self):
+    def test_only_authenticated_user_can_create_project(self):
         data = {
             "name": "test",
             "description": "test description",
@@ -68,7 +69,7 @@ class TaskAPITestCase(APITestCase):
 
         self.client.login(username="mr_fox", password="test")
         response = self.client.post(self.create_url, data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         self.client.logout()
         response = self.client.post(self.create_url, data)
@@ -101,7 +102,7 @@ class TaskAPITestCase(APITestCase):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_only_admin_can_update_project(self):
+    def test_admin_can_update_any_project(self):
         data = {
             "name": "Updated test",
             "description": "Updated test description",
@@ -118,44 +119,69 @@ class TaskAPITestCase(APITestCase):
         self.assertEqual(self.project.description, data["description"])
         self.assertEqual(self.project.due_date, data["due_date"])
 
+    def test_only_owner_can_update_project(self):
+        data = {
+            "name": "Updated test",
+            "description": "Updated test description",
+            "due_date": generate_random_datetime(),
+        }
         self.client.login(username="mr_fox", password="test")
         response = self.client.put(self.update_url, data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+        self.project.refresh_from_db()
+
+        self.assertEqual(self.project.name, data["name"])
+        self.assertEqual(self.project.description, data["description"])
+        self.assertEqual(self.project.due_date, data["due_date"])
+
+    def test_unauthenticated_user_cannot_update_project(self):
+        data = {
+            "name": "Updated test",
+            "description": "Updated test description",
+            "due_date": generate_random_datetime(),
+        }
         self.client.logout()
         response = self.client.put(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_only_admin_can_partial_update_project(self):
+    def test_admin_can_partial_update_any_project(self):
         data = {
             "name": "Partial Updated test",
         }
-
         self.client.login(username="admin", password="test")
         response = self.client.patch(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.project.refresh_from_db()
         self.assertEqual(self.project.name, data["name"])
 
+    def test_owner_user_can_partial_update_project(self):
+        data = {
+            "name": "Partial Updated test",
+        }
         self.client.login(username="mr_fox", password="test")
         response = self.client.patch(self.update_url, data)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_unauthenticated_user_cannot_partial_update_project(self):
+        data = {
+            "name": "Partial Updated test",
+        }
         self.client.logout()
         response = self.client.patch(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_only_admin_delete_project(self):
+    def test_admin_can_delete_any_project(self):
         self.client.login(username="admin", password="test")
         response = self.client.delete(self.delete_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
 
-    def test_normal_user_cannot_delete_project(self):
+    def test_owner_can_delete_project(self):
         self.client.login(username="mr_fox", password="test")
         response = self.client.delete(self.delete_url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertTrue(Task.objects.filter(pk=self.task.pk).exists())
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
 
     def test_unauthenticated_user_cannot_delete_project(self):
         self.client.logout()

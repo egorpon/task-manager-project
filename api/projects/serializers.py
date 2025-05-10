@@ -14,14 +14,20 @@ class ProjectReadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ("id", "name", "description", "due_date", "total_tasks")
+        fields = ("id", "name", "description", "owner", "due_date", "total_tasks")
         extra_kwargs = {"id": {"read_only": True}}
 
 
 class ProjectWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        fields = ("name", "description", "due_date")
+        fields = (
+            "name",
+            "description",
+            "owner",
+            "due_date",
+        )
+        extra_kwargs = {"owner": {"read_only": "owner"}}
 
     def validate_due_date(self, value):
         if value is None:
