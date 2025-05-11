@@ -12,12 +12,12 @@ urlpatterns = [
         name="project-detail",
     ),
     path(
-        "<int:project_id>/update",
+        "<int:project_id>/update/",
         views.ProjectUpdateAPIView.as_view(),
         name="project-update",
     ),
     path(
-        "<int:project_id>/delete",
+        "<int:project_id>/delete/",
         views.ProjectDeleteAPIView.as_view(),
         name="project-delete",
     )

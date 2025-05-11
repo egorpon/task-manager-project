@@ -18,13 +18,20 @@ class TaskAPITestCase(APITestCase):
         self.admin_user = User.objects.create_superuser(
             username="admin", password="test"
         )
-        self.normal_user = User.objects.create_user(username="mr_fox", password="test")
+        self.owner_user = User.objects.create_user(username="mr_fox", password="test")
+        self.normal_user = User.objects.create_user(
+            username="normal_user", password="test"
+        )
+        self.second_normal_user = User.objects.create_user(
+            username="second_normal_user", password="test"
+        )
         self.project = Project.objects.create(
             name="Website Redesign",
             description="Updating company's website design",
-            owner=self.normal_user,
+            owner=self.owner_user,
             due_date=generate_random_datetime(),
         )
+
         self.task = Task.objects.create(
             name="Design homepage mockup",
             description="Test Description",
@@ -33,9 +40,11 @@ class TaskAPITestCase(APITestCase):
             due_date=self.project.due_date - timezone.timedelta(days=2),
         )
 
-        AssignedUser.objects.create(user=self.normal_user, task=self.task)
+        AssignedUser.objects.create(user=self.owner_user, task=self.task)
+        AssignedUser.objects.create(user=self.second_normal_user, task=self.task)
 
         self.file = AttachedFiles.objects.create(files=file, task=self.task)
+
         self.list_url = reverse("task-list")
         self.create_url = reverse("task-create")
         self.detail_url = reverse("task-detail", kwargs={"task_id": self.task.id})
@@ -43,8 +52,8 @@ class TaskAPITestCase(APITestCase):
         self.update_url = reverse("task-update", kwargs={"task_id": self.task.id})
         self.delete_url = reverse("task-delete", kwargs={"task_id": self.task.id})
         self.task_attachments_url = reverse(
-            "task-file-list",
-            kwargs={"task_id": self.task.id})
+            "task-file-list", kwargs={"task_id": self.task.id}
+        )
         self.delete_attachments_url = reverse(
             "task-file-delete",
             kwargs={"task_id": self.task.id, "file_id": self.file.id},
@@ -276,7 +285,7 @@ class TaskAPITestCase(APITestCase):
         response = self.client.delete(self.delete_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_user_can_view_own_task_attachments(self):
+    def test_owner_can_view_own_task_attachments(self):
         self.client.login(username="mr_fox", password="test")
         response = self.client.get(self.task_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -285,6 +294,21 @@ class TaskAPITestCase(APITestCase):
         self.client.login(username="admin", password="test")
         response = self.client.get(self.task_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_owner_can_view_task_attachments(self):
+        self.client.login(username="mr_fox", password="test")
+        response = self.client.get(self.task_attachments_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_assigned_user_can_view_task_attachments(self):
+        self.client.login(username="second_normal_user", password="test")
+        response = self.client.get(self.task_attachments_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_not_assigned_user_cannot_view_any_task_attachments(self):
+        self.client.login(username="normal_user", password="test")
+        response = self.client.get(self.task_attachments_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_admin_can_delete_any_task_attachments(self):
         self.client.login(username="admin", password="test")
@@ -297,3 +321,9 @@ class TaskAPITestCase(APITestCase):
         response = self.client.delete(self.delete_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(AttachedFiles.objects.filter(pk=self.file.pk).exists())
+
+    def test_normal_assigned_user_cannot_delete_task_attachments(self):
+        self.client.login(username="normal_user", password="test")
+        response = self.client.delete(self.delete_attachments_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(AttachedFiles.objects.filter(pk=self.file.pk).exists())

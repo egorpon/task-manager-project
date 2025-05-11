@@ -22,6 +22,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from rest_framework.exceptions import PermissionDenied, NotFound
+
 
 class TaskCommentsListAPIView(generics.ListAPIView):
     queryset = Comment.objects.select_related("posted_by", "task").all()
@@ -42,7 +44,12 @@ class TaskCommentsListAPIView(generics.ListAPIView):
 
 
 class TaskListAPIView(generics.ListAPIView):
-    queryset = Task.objects.prefetch_related("assigned_users__user").select_related("project").all().order_by("pk")
+    queryset = (
+        Task.objects.prefetch_related("assigned_users__user")
+        .select_related("project")
+        .all()
+        .order_by("pk")
+    )
     serializer_class = TaskReadSerializer
     permission_classes = [IsAuthenticated]
     filterset_class = TaskFilter
@@ -58,7 +65,9 @@ class TaskListAPIView(generics.ListAPIView):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(Q(user=self.request.user) | Q(project__owner=self.request.user))
+        return qs.filter(
+            Q(user=self.request.user) | Q(project__owner=self.request.user)
+        )
 
 
 class TaskCreateAPIView(generics.CreateAPIView):
@@ -66,12 +75,6 @@ class TaskCreateAPIView(generics.CreateAPIView):
     serializer_class = TaskWriteSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
-
-    # def get_queryset(self):
-    #     qs = super().get_queryset()
-    #     if self.request.user.is_staff:
-    #         return qs
-    #     return qs.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -94,7 +97,9 @@ class TaskDetailAPIView(generics.RetrieveAPIView):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(Q(user=self.request.user) | Q(project__owner=self.request.user))
+        return qs.filter(
+            Q(user=self.request.user) | Q(project__owner=self.request.user)
+        ).distinct()
 
 
 class TaskUpdateAPIView(generics.UpdateAPIView):
@@ -153,16 +158,13 @@ class TaskDeleteAPIView(generics.DestroyAPIView):
 
 class TasksAttachmentsDeleteAPIView(generics.DestroyAPIView):
     queryset = AttachedFiles.objects.all()
-    permission_classes = [IsAuthenticated, IsAdminOrProjectOwner]
-
+    permission_classes = [IsAdminOrProjectOwner]
 
     def delete(self, request, task_id, file_id):
-        try:
-            file = AttachedFiles.objects.get(task=task_id, id=file_id)
-            file.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except:
-            return Response({"error": "File not found."}, status=status.HTTP_404_NOT_FOUND)
+        file = get_object_or_404(AttachedFiles,task=task_id, id=file_id)
+        self.check_object_permissions(request, file)
+        file.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TasksAttachmentsListAPIView(generics.ListAPIView):
@@ -176,4 +178,10 @@ class TasksAttachmentsListAPIView(generics.ListAPIView):
         qs = qs.filter(task=task_id)
         if self.request.user.is_staff:
             return qs
-        return qs.filter(Q(task__user=self.request.user) | Q(task__project__owner=self.request.user))
+        if qs.filter(
+            Q(task__user=self.request.user) | Q(task__project__owner=self.request.user)
+        ).exists():
+            return qs
+        raise PermissionDenied(
+            {"error": "You do not have permission to access this files"},
+        )

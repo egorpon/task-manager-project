@@ -13,6 +13,9 @@ from api.comments.filters import CommentsFilter
 from api.permissions import IsAdminOrProjectOwner
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import PermissionDenied
 
 
 class CommentsListAPIView(generics.ListAPIView):
@@ -30,7 +33,10 @@ class CommentsListAPIView(generics.ListAPIView):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(task__assigned_users__user=self.request.user)
+        return qs.filter(
+            Q(task__assigned_users__user=self.request.user)
+            | Q(task__project__owner=self.request.user)
+        )
 
 
 class CommentsCreateAPIView(generics.CreateAPIView):
@@ -41,15 +47,6 @@ class CommentsCreateAPIView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        task = serializer.validated_data["task"]
-        if (
-            not request.user.is_staff
-            and not task.user.filter(id=request.user.id).exists()
-        ):
-            return Response(
-                {"message": "You don't have permission to comment this task"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         comment = serializer.save(posted_by=self.request.user)
         read_serializer = CommentsReadSerializer(comment)
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
@@ -65,7 +62,10 @@ class CommentsDetailAPIView(generics.RetrieveAPIView):
         qs = super().get_queryset()
         if self.request.user.is_staff:
             return qs
-        return qs.filter(task__assigned_users__user=self.request.user)
+        return qs.filter(
+            Q(task__assigned_users__user=self.request.user)
+            | Q(task__project__owner=self.request.user)
+        ).distinct()
 
 
 class CommentsUpdateAPIView(generics.UpdateAPIView):
@@ -112,11 +112,11 @@ class CommentsUpdateAPIView(generics.UpdateAPIView):
 class CommentsDeleteAPIView(generics.DestroyAPIView):
     queryset = Comment.objects.all().order_by("pk")
     lookup_url_kwarg = "comment_id"
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminOrProjectOwner]
     serializer_class = CommentsReadSerializer
 
-    def get_queryset(self):
-        qs = super().get_queryset()
-        if self.request.user.is_staff:
-            return qs
-        return qs.filter(posted_by=self.request.user)
+    def delete(self, request, comment_id):
+        file = get_object_or_404(Comment, pk=comment_id)
+        self.check_object_permissions(request, file)
+        file.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
