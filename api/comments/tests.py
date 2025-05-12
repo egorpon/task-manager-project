@@ -105,7 +105,7 @@ class TaskAPITestCase(APITestCase):
         response = self.client.put(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.comment.refresh_from_db()
-        self.assertEqual(self.comment.text, response.data["task"]["text"])
+        self.assertEqual(self.comment.text, response.data["text"])
 
     def test__assigned_user_can_update_comments_on_task(self):
         data = {"text": "Admin krasavchik"}
@@ -113,7 +113,7 @@ class TaskAPITestCase(APITestCase):
         response = self.client.put(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.comment.refresh_from_db()
-        self.assertEqual(self.comment.text, response.data["task"]["text"])
+        self.assertEqual(self.comment.text, response.data["text"])
 
     def test_owner_can_update_comments_on_ow_task(self):
         comment = Comment.objects.create(
@@ -124,7 +124,7 @@ class TaskAPITestCase(APITestCase):
         response = self.client.put(f"/comments/{comment.id}/update/", data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         comment.refresh_from_db()
-        self.assertEqual(comment.text, response.data["task"]["text"])
+        self.assertEqual(comment.text, response.data["text"])
 
     def test_admin_can_view_all_comments(self):
         comment = Comment.objects.create(
@@ -172,3 +172,29 @@ class TaskAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["text"], self.comment.text)
+
+    def test_normal_user_cannot_comment_on_task_from_not_owned_project_or_unassigned_task(
+        self,
+    ):
+        project = Project.objects.create(
+            name="Website Redesign",
+            description="Updating company's website design",
+            owner=self.admin_user,
+        )
+
+        task = Task.objects.create(
+            name="test",
+            description="test description",
+            priority=Task.PriorityChoices.HIGH,
+            project_id=project.id,
+        )
+        comment = {"task_id": task.id, "text": "text"}
+        self.client.login(username=self.normal_user.username, password="test")
+        response = self.client.post(
+            self.create_url,
+            comment,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(
+            "You cannot write comment on other task", response.data["task_id"][0]
+        )

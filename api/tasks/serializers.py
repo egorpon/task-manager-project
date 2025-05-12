@@ -54,7 +54,7 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             "assigned_users",
             "project_id",
             "total_comments",
-            "total_uploaded_files"
+            "total_uploaded_files",
         )
 
 
@@ -65,7 +65,6 @@ class TaskReadSerializer(serializers.ModelSerializer):
 
     total_assigned_users = serializers.SerializerMethodField()
     total_uploaded_files = serializers.SerializerMethodField()
-
 
     def get_total_assigned_users(self, obj) -> int:
         return len(obj.assigned_users.all())
@@ -84,7 +83,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
             "due_date",
             "project_detail",
             "total_assigned_users",
-            "total_uploaded_files"
+            "total_uploaded_files",
         )
 
 
@@ -118,7 +117,7 @@ class TaskWriteSerializer(serializers.ModelSerializer):
         extra_kwargs = {"id": {"read_only": True}}
 
     def create(self, validated_data):
-        users_data = validated_data.pop("users",None)
+        users_data = validated_data.pop("users", None)
         uploaded_files = validated_data.pop("uploaded_files", None)
         task = Task.objects.create(**validated_data)
 
@@ -132,14 +131,6 @@ class TaskWriteSerializer(serializers.ModelSerializer):
             AssignedUser.objects.create(task=task, user_id=user.id)
         return task
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        user = self.context["request"].user
-        if user.is_staff:
-            self.fields["project_id"].queryset = Project.objects.all()
-        else:
-            self.fields["project_id"].queryset = Project.objects.filter(owner=user) 
-
     def validate(self, attrs):
         project = attrs.get("project")
         due_date = attrs.get("due_date")
@@ -151,6 +142,11 @@ class TaskWriteSerializer(serializers.ModelSerializer):
             )
         return attrs
 
+    def validate_project_id(self, value):
+        user = self.context["request"].user
+        if not user.is_staff and value.owner != user:
+            raise serializers.ValidationError("You cannot assign task to other project")
+        return value
 
     def validate_due_date(self, value):
         if value is None:
@@ -195,14 +191,6 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
             "id": {"read_only": True},
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        user = self.context["request"].user
-        if user.is_staff:
-            self.fields["project_id"].queryset = Project.objects.all()
-        else:
-            self.fields["project_id"].queryset = Project.objects.filter(owner=user) 
-
     def update(self, instance, validated_data):
         new_users = validated_data.pop("users", None)
         uploaded_files = validated_data.pop("uploaded_files", None)
@@ -241,6 +229,12 @@ class TaskUpdateSerializer(serializers.ModelSerializer):
                 "Date cannot be later than project's due date"
             )
         return attrs
+
+    def validate_project_id(self, value):
+        user = self.context["request"].user
+        if not user.is_staff and value.owner != user:
+            raise serializers.ValidationError("You cannot assign task to other project")
+        return value
 
     def validate_due_date(self, value):
         if value is None:

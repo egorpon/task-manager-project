@@ -42,16 +42,13 @@ class CommentsWriteSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ("task_id", "text")
 
-    def __init__(self, instance=None, *args, **kwargs):
-        super().__init__(instance, *args, **kwargs)
+    def validate_task_id(self, value):
         user = self.context["request"].user
-
-        if user.is_staff:
-            self.fields["task_id"].queryset = Task.objects.all()
-        else:
-            self.fields["task_id"].queryset = Task.objects.filter(
-                Q(assigned_users__user=user) | Q(project__owner=user)
-            )
+        if not user.is_staff and (
+            user not in value.user.all() and value.project.owner != user
+        ):
+            raise serializers.ValidationError("You cannot write comment on other task")
+        return value
 
 
 class CommentsUpdateSerializer(serializers.ModelSerializer):

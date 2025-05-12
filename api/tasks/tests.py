@@ -60,11 +60,11 @@ class TaskAPITestCase(APITestCase):
         )
 
     def test_only_authenticated_user_can_view_task_comments_list(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.get(self.comments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.get(self.comments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -73,11 +73,11 @@ class TaskAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_only_authenticated_user_can_view_task_list(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -98,7 +98,7 @@ class TaskAPITestCase(APITestCase):
             "uploaded_files": file,
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -110,7 +110,7 @@ class TaskAPITestCase(APITestCase):
             "project_id": self.project.id,
             "users": [self.normal_user.id],
         }
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -124,7 +124,7 @@ class TaskAPITestCase(APITestCase):
             "users": [self.normal_user.id],
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.post(self.create_url, data, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -141,7 +141,7 @@ class TaskAPITestCase(APITestCase):
             "due_date": timezone.now() - timezone.timedelta(days=5),
             "users": [self.normal_user.id],
         }
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -157,18 +157,38 @@ class TaskAPITestCase(APITestCase):
             "users": [999],
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("does not exist.", response.data["users"][0])
 
+    def test_owner_assign_task_to_not_owned_project_raises_error(self):
+        project = Project.objects.create(
+            name="Website Redesign",
+            description="Updating company's website design",
+            owner=self.admin_user,
+        )
+
+        data = {
+            "name": "test",
+            "description": "test description",
+            "priority": Task.PriorityChoices.HIGH,
+            "project_id": project.id,
+            "users": [999],
+        }
+        self.client.login(username=self.owner_user.username, password="test")
+        response = self.client.post(self.create_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("You cannot assign task to other project", response.data["project_id"][0])
+
+
     def test_admin_can_view_any_task_detail(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_project_owner_can_view_task_detail(self):
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -191,7 +211,7 @@ class TaskAPITestCase(APITestCase):
             "uploaded_files": [file],
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.put(self.update_url, data, format="multipart")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.task.refresh_from_db()
@@ -216,7 +236,7 @@ class TaskAPITestCase(APITestCase):
             "uploaded_files": [file],
         }
 
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.put(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.task.refresh_from_db()
@@ -245,7 +265,7 @@ class TaskAPITestCase(APITestCase):
             "name": "Partial Updated test",
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.patch(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.task.refresh_from_db()
@@ -256,7 +276,7 @@ class TaskAPITestCase(APITestCase):
             "name": "Partial Updated test",
         }
 
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.patch(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -269,13 +289,13 @@ class TaskAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_only_admin_delete_any_task(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.delete(self.delete_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
 
     def test_project_owner_can_delete_own_task(self):
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.delete(self.delete_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
@@ -286,44 +306,44 @@ class TaskAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_owner_can_view_own_task_attachments(self):
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.get(self.task_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_admin_can_view_any_task_attachments(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.get(self.task_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_owner_can_view_task_attachments(self):
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.get(self.task_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_assigned_user_can_view_task_attachments(self):
-        self.client.login(username="second_normal_user", password="test")
+        self.client.login(username=self.second_normal_user.username, password="test")
         response = self.client.get(self.task_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_not_assigned_user_cannot_view_any_task_attachments(self):
-        self.client.login(username="normal_user", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.get(self.task_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_admin_can_delete_any_task_attachments(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.delete(self.delete_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(AttachedFiles.objects.filter(pk=self.file.pk).exists())
 
     def test_owner_can_delete_own_task_attachments(self):
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.owner_user.username, password="test")
         response = self.client.delete(self.delete_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(AttachedFiles.objects.filter(pk=self.file.pk).exists())
 
     def test_normal_assigned_user_cannot_delete_task_attachments(self):
-        self.client.login(username="normal_user", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.delete(self.delete_attachments_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertTrue(AttachedFiles.objects.filter(pk=self.file.pk).exists())

@@ -81,8 +81,7 @@ class TaskCreateAPIView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         task = serializer.save()
         read_serializer = TaskDetailSerializer(task)
-        custom_response = {"task": read_serializer.data}
-        return Response(custom_response, status=status.HTTP_201_CREATED)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class TaskDetailAPIView(generics.RetrieveAPIView):
@@ -123,10 +122,7 @@ class TaskUpdateAPIView(generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         task = serializer.save()
         read_serializer = TaskDetailSerializer(task)
-        custom_response = {
-            "task": read_serializer.data,
-        }
-        return Response(custom_response, status=status.HTTP_200_OK)
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -137,10 +133,8 @@ class TaskUpdateAPIView(generics.UpdateAPIView):
         task = serializer.save()
         task.refresh_from_db()
         read_serializer = TaskDetailSerializer(task)
-        custom_response = {
-            "task": read_serializer.data,
-        }
-        return Response(custom_response, status=status.HTTP_200_OK)
+
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
 
 class TaskDeleteAPIView(generics.DestroyAPIView):
@@ -161,7 +155,7 @@ class TasksAttachmentsDeleteAPIView(generics.DestroyAPIView):
     permission_classes = [IsAdminOrProjectOwner]
 
     def delete(self, request, task_id, file_id):
-        file = get_object_or_404(AttachedFiles,task=task_id, id=file_id)
+        file = get_object_or_404(AttachedFiles, task=task_id, id=file_id)
         self.check_object_permissions(request, file)
         file.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

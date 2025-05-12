@@ -6,9 +6,15 @@ from task.models import Task
 
 
 # Register your models here.
+class ProjectTaskInline(admin.StackedInline):
+    model = Task
+    extra = 1
+    
 
-admin.site.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    inlines = [ProjectTaskInline]
+
+
+admin.site.register(Project, ProjectAdmin)
 admin.site.register(Task)
 admin.site.register(Comment)
-
-

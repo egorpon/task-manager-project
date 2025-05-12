@@ -89,10 +89,7 @@ class CommentsUpdateAPIView(generics.UpdateAPIView):
         task = serializer.save()
         task.refresh_from_db()
         read_serializer = CommentsReadSerializer(task)
-        custom_response = {
-            "task": read_serializer.data,
-        }
-        return Response(custom_response, status=status.HTTP_200_OK)
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -103,10 +100,7 @@ class CommentsUpdateAPIView(generics.UpdateAPIView):
         task = serializer.save()
         task.refresh_from_db()
         read_serializer = CommentsReadSerializer(task)
-        custom_response = {
-            "task": read_serializer.data,
-        }
-        return Response(custom_response, status=status.HTTP_200_OK)
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
 
 
 class CommentsDeleteAPIView(generics.DestroyAPIView):

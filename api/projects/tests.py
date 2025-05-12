@@ -44,11 +44,11 @@ class TaskAPITestCase(APITestCase):
         )
 
     def test_only_authenticated_user_can_view_project_list(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -63,11 +63,11 @@ class TaskAPITestCase(APITestCase):
             "due_date": generate_random_datetime(),
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -82,7 +82,7 @@ class TaskAPITestCase(APITestCase):
             "due_date": timezone.now() - timezone.timedelta(days=5),
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.post(self.create_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
@@ -90,11 +90,11 @@ class TaskAPITestCase(APITestCase):
         )
 
     def test_only_authenticated_can_view_project_detail(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -109,7 +109,7 @@ class TaskAPITestCase(APITestCase):
             "due_date": generate_random_datetime(),
         }
 
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.put(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -125,7 +125,7 @@ class TaskAPITestCase(APITestCase):
             "description": "Updated test description",
             "due_date": generate_random_datetime(),
         }
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.put(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -149,7 +149,7 @@ class TaskAPITestCase(APITestCase):
         data = {
             "name": "Partial Updated test",
         }
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.patch(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.project.refresh_from_db()
@@ -159,7 +159,7 @@ class TaskAPITestCase(APITestCase):
         data = {
             "name": "Partial Updated test",
         }
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.patch(self.update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -172,13 +172,13 @@ class TaskAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_admin_can_delete_any_project(self):
-        self.client.login(username="admin", password="test")
+        self.client.login(username=self.admin_user.username, password="test")
         response = self.client.delete(self.delete_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
 
     def test_owner_can_delete_project(self):
-        self.client.login(username="mr_fox", password="test")
+        self.client.login(username=self.normal_user.username, password="test")
         response = self.client.delete(self.delete_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
