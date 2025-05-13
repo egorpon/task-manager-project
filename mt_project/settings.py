@@ -165,9 +165,10 @@ SIMPLE_JWT = {
 
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "mt_project",
+    "TITLE": "task_manager_project",
     "DESCRIPTION": "Manage your project and create tasks for your team",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
     # OTHER SETTINGS
 }

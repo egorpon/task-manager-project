@@ -3,6 +3,7 @@ from project.models import Project
 from django.utils import timezone
 from task.models import Task, AssignedUser, AttachedFiles
 from django.contrib.auth.models import User
+from drf_spectacular.utils import extend_schema_field
 
 
 class AssignedUserSerializer(serializers.ModelSerializer):
@@ -69,7 +70,7 @@ class TaskReadSerializer(serializers.ModelSerializer):
     def get_total_assigned_users(self, obj) -> int:
         return len(obj.assigned_users.all())
 
-    def get_total_uploaded_files(self, obj):
+    def get_total_uploaded_files(self, obj) -> int:
         return len(obj.files.all())
 
     class Meta:
@@ -115,6 +116,7 @@ class TaskWriteSerializer(serializers.ModelSerializer):
             "uploaded_files",
         )
         extra_kwargs = {"id": {"read_only": True}}
+
 
     def create(self, validated_data):
         users_data = validated_data.pop("users", None)

@@ -23,6 +23,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied, NotFound
+from drf_spectacular.utils import extend_schema, OpenApiParameter,OpenApiTypes
 
 
 class TaskCommentsListAPIView(generics.ListAPIView):
@@ -153,6 +154,7 @@ class TaskDeleteAPIView(generics.DestroyAPIView):
 class TasksAttachmentsDeleteAPIView(generics.DestroyAPIView):
     queryset = AttachedFiles.objects.all()
     permission_classes = [IsAdminOrProjectOwner]
+    serializer_class = AttachedFilesSerializer
 
     def delete(self, request, task_id, file_id):
         file = get_object_or_404(AttachedFiles, task=task_id, id=file_id)
