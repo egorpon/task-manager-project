@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  postgres_db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: tm_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: ./
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres_db
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_NAME: tm_db
+      DATABASE_PASSWORD: admin
+      DATABASE_USERNAME: postgres
+      DATABASE_PORT: "5432"
+    volumes:
+      - ./:/app
+volumes:
+  postgres_data:
