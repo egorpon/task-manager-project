@@ -10,4 +10,6 @@ class Comment(models.Model):
     posted_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'Comment posted by {self.posted_by.get_full_name} and created at {self.created_at}'
+        if self.posted_by.username == "admin":
+            return f'Comment posted by {self.posted_by.username}  and created at {self.created_at}'
+        return f'Comment posted by {self.posted_by.get_full_name()} and created at {self.created_at}'
