@@ -5,16 +5,20 @@ from django.contrib.auth.models import User
 from django.utils import lorem_ipsum
 from random import choice
 from django.db import connection
+from django.conf import settings
+
 
 
 class Command(BaseCommand):
-    help = "Creates сomments sample data"
+    help = "Creates comments sample data"
 
     def handle(self, *args, **options):
         Comment.objects.all().delete()
 
+        engine = settings.DATABASES['default']['ENGINE']
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM sqlite_sequence WHERE name='comment_comment';")
+            if 'postgresql' in engine:
+                cursor.execute("SELECT setval(pg_get_serial_sequence('comment_comment', 'id'), 1, false);")
 
         users = User.objects.all()
         tasks = Task.objects.all()

@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+  postgres_db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: ${POSTGRES_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+  api:
+    build: ./
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres_db
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DEBUG: ${DEBUG}
+      DATABASE_HOST: ${POSTGRES_HOST}
+      DATABASE_NAME: ${POSTGRES_NAME}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PORT: ${POSTGRES_PORT}
+    volumes:
+      - ./:/api
+    env_file:
+      - .env
+volumes:
+  postgres_data:
