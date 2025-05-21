@@ -1,6 +1,8 @@
-FROM python:alpine
+FROM python:alpine3.20
 
 WORKDIR /api
+
+RUN pip install --upgrade pip
 
 COPY requirements.txt ./
 
