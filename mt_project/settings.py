@@ -178,3 +178,6 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
 }
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+DEFAULT_FROM_EMAIL = "example@mail.com"

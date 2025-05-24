@@ -11,7 +11,7 @@ from api.tasks.serializers import (
     AttachedFilesSerializer,
 )
 from api.permissions import IsAdminOrProjectOwner
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from api.comments.serializers import CommentsReadSerializer
 from comment.models import Comment
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
@@ -23,8 +23,8 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied, NotFound
-from drf_spectacular.utils import extend_schema, OpenApiParameter,OpenApiTypes
-
+from api.task import send_assigned_task_email
+import sys
 
 class TaskCommentsListAPIView(generics.ListAPIView):
     queryset = Comment.objects.select_related("posted_by", "task").all()
@@ -76,11 +76,18 @@ class TaskCreateAPIView(generics.CreateAPIView):
     serializer_class = TaskWriteSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         task = serializer.save()
+        users_id = task.assigned_users.values_list("user", flat=True)
+        emails = []
+        for user_id in users_id:
+            user = User.objects.get(id=user_id)
+            emails.append(user.email)
+        print(emails)
+        sys.stdout.flush()
+        send_assigned_task_email.apply_async(kwargs={"task_id":task.id, "user_emails": emails })
         read_serializer = TaskDetailSerializer(task)
         return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 

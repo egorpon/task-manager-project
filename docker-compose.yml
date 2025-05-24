@@ -16,6 +16,12 @@ services:
     env_file:
       - .env
 
+  rabbitmq:
+    image: rabbitmq
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
   api:
     build: ./
     restart: always
@@ -36,5 +42,23 @@ services:
       - ./:/api
     env_file:
       - .env
+
+  celery:
+    build: ./
+    container_name: celery
+    restart: always
+    command: celery -A mt_project worker -l INFO --hostname=worker1@%h -Q email
+    volumes:
+      - ./mt_project:/app
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - api
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8888:8080"
 volumes:
   postgres_data:
