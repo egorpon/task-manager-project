@@ -1,5 +1,5 @@
 amqp==5.3.1
-asgiref==3.8.1
+asgiref==3.11.1
 attrs==25.3.0
 autopep8==2.3.2
 billiard==4.2.1
@@ -9,7 +9,7 @@ click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
 colorama==0.4.6
-Django==5.2
+Django==6.0.4
 django-extensions==4.1
 django-filter==25.1
 django-silk==5.3.2
