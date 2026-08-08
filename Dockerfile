@@ -1,15 +1,18 @@
-FROM python:alpine3.20
+FROM python:3.13-slim
 
-WORKDIR /api
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-RUN pip install --upgrade pip
+WORKDIR /app
 
-COPY requirements.txt ./
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --no-install-project
 
 COPY . .
 
-EXPOSE 8000
+RUN uv sync
 
-CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000"]
+ENV PATH="/app/.venv/bin:$PATH"

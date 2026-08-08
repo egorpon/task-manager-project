@@ -1,8 +1,6 @@
-version: "3"
-
 services:
   postgres_db:
-    image: postgres
+    image: postgres:16-alpine
     restart: always
     shm_size: 128mb
     environment:
@@ -17,7 +15,7 @@ services:
       - .env
 
   rabbitmq:
-    image: rabbitmq
+    image: rabbitmq:3.13-management
     restart: always
     ports:
       - 5672:5672
@@ -27,6 +25,7 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     depends_on:
       - postgres_db
     environment:
@@ -39,7 +38,8 @@ services:
       DATABASE_USERNAME: ${POSTGRES_USER}
       DATABASE_PORT: ${POSTGRES_PORT}
     volumes:
-      - ./:/api
+       - .:/app
+       - /app/.venv
     env_file:
       - .env
 
@@ -49,7 +49,8 @@ services:
     restart: always
     command: celery -A mt_project worker -l INFO --hostname=worker1@%h -Q email
     volumes:
-      - ./mt_project:/app
+      - .:/app
+      - /app/.venv
     env_file:
       - .env
     depends_on:
